@@ -5,14 +5,17 @@
 #include "cache_state.h"
 using namespace std;
 
+//========================================================================//
+// CLASS NEURALMODULE
+//========================================================================//
 class NeuralModule {
 public:
     NeuralModule(int num_sets, int num_ways, string ip_address, int buffer_size=1024);
     ~NeuralModule();
     
-    int    getPrediction(vector<double>& counters);
-    void   retrain(vector<double>& counters);
-    void   updateState(int set_id, int way_id, bool is_hit, int access_type);
+    int    getPrediction(int set_id, int access_type);
+    void   retrain();
+    void   updateState(int set_id, int way_id, bool is_hit, int access_type, vector<int> recency_list);
     string sendMessage(string msg);
     string getReply();
     void   connectServer();
@@ -26,7 +29,7 @@ private:
     string m_ipaddr;
     int createSocket();
 
-    // runtime counters
+    // cache profiling data
     CacheState *cache;
 
     // prediction stats

@@ -21,40 +21,39 @@
 #include "utils.h"
 #include "crc_cache_defs.h"
 #include <iostream>
+#include "neural_module.h"
 
 using namespace std;
 
 // Replacement Policies Supported
-typedef enum 
-{
+typedef enum {
     CRC_REPL_LRU        = 0,
     CRC_REPL_RANDOM     = 1,
     CRC_REPL_CONTESTANT = 2
 } ReplacemntPolicy;
 
+
 // Replacement State Per Cache Line
-typedef struct
-{
+typedef struct {
     UINT32  LRUstackposition;
-
     // CONTESTANTS: Add extra state per cache line here
-
 } LINE_REPLACEMENT_STATE;
+
 
 struct sampler; // Jimenez's structures
 
+
 // The implementation for the cache replacement policy
-class CACHE_REPLACEMENT_STATE
-{
+class CACHE_REPLACEMENT_STATE {
 public:
     LINE_REPLACEMENT_STATE   **repl;
-  private:
 
+private:
+    NeuralModule *neural_module;
     UINT32 numsets;
     UINT32 assoc;
     UINT32 replPolicy;
-
-    COUNTER mytimer;  // tracks # of references to the cache
+    COUNTER num_accesses;  // tracks # of references to the cache
 
     // CONTESTANTS:  Add extra state for cache here
 
@@ -63,28 +62,20 @@ public:
 
     // The constructor CAN NOT be changed
     CACHE_REPLACEMENT_STATE( UINT32 _sets, UINT32 _assoc, UINT32 _pol );
-
-    INT32 GetVictimInSet( UINT32 tid, UINT32 setIndex, const LINE_STATE *vicSet, UINT32 assoc, Addr_t PC, Addr_t paddr, UINT32 accessType, UINT32 accessSource);
-
-    void   UpdateReplacementState( UINT32 setIndex, INT32 updateWayID);
-
+    ~CACHE_REPLACEMENT_STATE(void);
+    void   IncrementTimer() { num_accesses++; } 
+    INT32  GetVictimInSet( UINT32 tid, UINT32 setIndex, const LINE_STATE *vicSet, UINT32 assoc, Addr_t PC, Addr_t paddr, UINT32 accessType, UINT32 accessSource);
     void   SetReplacementPolicy( UINT32 _pol ) { replPolicy = _pol; } 
-    void   IncrementTimer() { mytimer++; } 
-
     void   UpdateReplacementState( UINT32 setIndex, INT32 updateWayID, const LINE_STATE *currLine, 
                                    UINT32 tid, Addr_t PC, UINT32 accessType, bool cacheHit, UINT32 accessSource);
-
-    ~CACHE_REPLACEMENT_STATE(void);
-
-  private:
     
+  private:  
     void   InitReplacementState();
     INT32  Get_Random_Victim( UINT32 setIndex );
-
     INT32  Get_LRU_Victim( UINT32 setIndex );
-    INT32  Get_My_Victim( UINT32 setIndex );
+    INT32  Get_My_Victim( UINT32 setIndex, UINT32 accessType );
     void   UpdateLRU( UINT32 setIndex, INT32 updateWayID );
-    void   UpdateMyPolicy( UINT32 setIndex, INT32 updateWayID );
+    void   UpdateMyPolicy( UINT32 setIndex, INT32 updateWayID, bool cacheHit, UINT32 accessType );
 };
 
 #endif

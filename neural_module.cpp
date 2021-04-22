@@ -5,7 +5,9 @@
 #include <iostream>
 #include <string.h>
 
-
+//========================================================================//
+// CLASS NEURALMODULE
+//========================================================================//
 NeuralModule::NeuralModule(int num_sets, int num_ways, string ip_address, int buffer_size) {
     m_buffer_size = buffer_size;
     m_ipaddr      = ip_address;
@@ -14,21 +16,20 @@ NeuralModule::NeuralModule(int num_sets, int num_ways, string ip_address, int bu
     connectServer();
 }
 
-
+//========================================================================//
 NeuralModule::~NeuralModule() { 
     disconnectServer(); 
 }
 
-
+//========================================================================//
 int NeuralModule::createSocket() {
     int sock = 0;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         throw "Socket creation error";
-
     return sock;
 }
 
-
+//========================================================================//
 void NeuralModule::connectServer() {
     struct sockaddr_in serv_addr;
     memset(&serv_addr, '0', sizeof(serv_addr));
@@ -44,20 +45,20 @@ void NeuralModule::connectServer() {
         throw "Connection Failed";
 }
 
-
+//========================================================================//
 void NeuralModule::disconnectServer() { 
     string reply = sendMessage("disconnect");
     cout << reply << endl;
     close(m_sock); 
 }
 
-
+//========================================================================//
 string NeuralModule::sendMessage(string msg) {
     send(m_sock, msg.c_str(), strlen(msg.c_str()), 0);
     return getReply();
 }
 
-
+//========================================================================//
 string NeuralModule::getReply() {
     char buffer[m_buffer_size];
     int valread = read(m_sock, buffer, m_buffer_size);
@@ -68,18 +69,19 @@ string NeuralModule::getReply() {
     return reply;
 }
 
-
-int NeuralModule::getPrediction(vector<double>& counters) {
-    int prediction = 0;
-    return prediction;
+//========================================================================//
+int NeuralModule::getPrediction(int set_id, int access_type) {
+    int victim = 0;
+    this->cache->resetState(set_id, victim, access_type);
+    return victim;
 }
 
-
-void NeuralModule::updateState(int set_id, int way_id, bool is_hit, int access_type) {
-    this->cache->updateState(set_id, way_id, is_hit, access_type);
+//========================================================================//
+void NeuralModule::updateState(int set_id, int way_id, bool is_hit, int access_type, vector<int> recency_list) {
+    this->cache->updateState(set_id, way_id, is_hit, access_type, recency_list);
 }
 
-
-void NeuralModule::retrain(vector<double>& counters) {
+//========================================================================//
+void NeuralModule::retrain() {
 
 }

@@ -12,7 +12,7 @@ struct WayState {
     int preuse = 0;
 
     // last access type
-    vector<int> access_type = {0, 0, 0, 0, 0};
+    vector<int> access_type = {0,0,0,0,0};
 
     // line recency
     int recency = 0;
@@ -28,7 +28,8 @@ struct WayState {
 class SetState {
 public:
     SetState(int num_ways);
-    void updateState(int way, bool is_hit, int access_type);
+    void updateState(int way, bool is_hit, int access_type, vector<int> recency_list);
+    void resetState(int way, int access_type);
 
 private:
     vector<WayState*> way_array;
@@ -42,7 +43,8 @@ class CacheState {
 public:
     CacheState(int num_sets, int num_ways);
     SetState getState(int set, int way);
-    void updateState(int set, int way, bool is_hit, int access_type);
+    void updateState(int set, int way, bool is_hit, int access_type, vector<int> recency_list);
+    void resetState(int set, int way, int access_type);
 
 private:
     int m_nsets;
