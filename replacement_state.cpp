@@ -228,7 +228,7 @@ void CACHE_REPLACEMENT_STATE::UpdateLRU( UINT32 setIndex, INT32 updateWayID ) {
 }
 
 INT32 CACHE_REPLACEMENT_STATE::Get_My_Victim( UINT32 setIndex, UINT32 accessType ) {
-	return neural_module->getPrediction(setIndex, accessType);
+	return neural_module->predict(setIndex, accessType);
 }
 
 void CACHE_REPLACEMENT_STATE::UpdateMyPolicy( UINT32 setIndex, INT32 updateWayID, bool cacheHit, UINT32 accessType ) {

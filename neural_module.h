@@ -13,8 +13,9 @@ public:
     NeuralModule(int num_sets, int num_ways, string ip_address, int buffer_size=1024);
     ~NeuralModule();
     
-    int    getPrediction(int set_id, int access_type);
+    int    predict(int set_id, int access_type);
     void   retrain();
+    void   addSample();
     void   updateState(int set_id, int way_id, bool is_hit, int access_type, vector<int> recency_list);
     string sendMessage(string msg);
     string getReply();

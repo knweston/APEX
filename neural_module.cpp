@@ -70,8 +70,30 @@ string NeuralModule::getReply() {
 }
 
 //========================================================================//
-int NeuralModule::getPrediction(int set_id, int access_type) {
-    int victim = 0;
+int NeuralModule::predict(int set_id, int access_type) {
+    string reply = sendMessage("make prediction");
+    cout << reply << endl;
+
+    // Build state vector = state of all ways in set
+    vector<double> counters;
+    SetState *victim_set = this->cache->getSetState(set_id);
+    for (int way=0; way < cache->getNumWays(); ++way) {
+        WayState *block = victim_set->getWayState(way);
+        counters.push_back(block->preuse);
+        for (unsigned i=0; i < block->access_type.size(); ++i)
+            counters.push_back(block->access_type[i]);
+        counters.push_back(block->recency);
+        counters.push_back(block->num_hits);
+    }
+
+    for (unsigned i=0; i < counters.size(); ++i) {
+        string reply = sendMessage(to_string(counters[i]));
+        cout << reply << endl;
+    }
+
+    // Server replies the prediction after the "ending" signal is sent
+    int victim = stoi(sendMessage("E"));
+    cout << "victim block = " << victim << std::endl;
     this->cache->resetState(set_id, victim, access_type);
     return victim;
 }
@@ -83,5 +105,7 @@ void NeuralModule::updateState(int set_id, int way_id, bool is_hit, int access_t
 
 //========================================================================//
 void NeuralModule::retrain() {
-
+    string reply = sendMessage("retrain");
+    cout << reply << endl;
 }
+

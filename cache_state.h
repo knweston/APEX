@@ -30,6 +30,7 @@ public:
     SetState(int num_ways);
     void updateState(int way, bool is_hit, int access_type, vector<int> recency_list);
     void resetState(int way, int access_type);
+    WayState* getWayState(int way) { return way_array[way]; }
 
 private:
     vector<WayState*> way_array;
@@ -42,7 +43,10 @@ private:
 class CacheState {
 public:
     CacheState(int num_sets, int num_ways);
-    SetState getState(int set, int way);
+    SetState* getSetState(int set) { return this->set_array[set]; }
+    int getNumSets() { return m_nsets; }
+    int getNumWays() { return m_nways; }
+    
     void updateState(int set, int way, bool is_hit, int access_type, vector<int> recency_list);
     void resetState(int set, int way, int access_type);
 
