@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "replacement_state.h"
 #include "cache.h"
+#include <vector>
 
 using namespace std;
 
@@ -117,12 +118,12 @@ bool cache_access (cache *c, unsigned long long int address, unsigned long long 
 	if (writeback_address) *writeback_address = 0;
 	AccessTypes at;
 	switch (op) {
-		case DAN_PREFETCH: at = ACCESS_PREFETCH; break;
-		case DAN_DREAD: at = ACCESS_LOAD; break;
-		case DAN_WRITE: at = ACCESS_STORE; break;
-		case DAN_WRITEBACK: at = ACCESS_WRITEBACK; break;
-		case DAN_IREAD: at = ACCESS_IFETCH; break;
-		default: at = ACCESS_LOAD;
+		case DAN_PREFETCH: at = ACCESS_PREFETCH; break;		
+		case DAN_DREAD: at = ACCESS_LOAD; break;			
+		case DAN_WRITE: at = ACCESS_STORE; break;			
+		case DAN_WRITEBACK: at = ACCESS_WRITEBACK; break;	
+		case DAN_IREAD: at = ACCESS_IFETCH; break;			
+		default: at = ACCESS_LOAD;							
 		printf ("op is %d!\n", op); fflush (stdout);
 		assert (0);
 	}
@@ -210,7 +211,12 @@ bool cache_access (cache *c, unsigned long long int address, unsigned long long 
 	} else {
 		// assume we are using CRC replacement policy, see what it wants to replace
 		if (set_valid) {
-			i = c->repl->GetVictimInSet (core, set, NULL, assoc, pc, address, at, access_source); // replace
+			vector<unsigned long long> tags(assoc, 0);
+			// unsigned long long *tags = new unsigned long long[assoc];
+			for (int i=0; i < assoc; ++i) {
+				tags[i] = c->sets[set].blocks[i].tag;
+			}
+			i = c->repl->GetVictimInSet (core, set, NULL, assoc, pc, address, at, access_source, tags); // replace
 		}
 		ls.tag = tag;
 

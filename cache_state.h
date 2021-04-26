@@ -8,6 +8,10 @@ using namespace std;
 // CLASS WAYSTATE
 //========================================================================//
 struct WayState {
+    WayState() {}
+
+    ~WayState() {}
+
     // preuse distance
     int preuse = 0;
 
@@ -15,7 +19,7 @@ struct WayState {
     vector<int> access_type = {0,0,0,0,0};
 
     // line recency
-    int recency = 0;
+    unsigned recency = 0;
 
     // hits since insertion
     int num_hits = 0;
@@ -27,13 +31,40 @@ struct WayState {
 //========================================================================//
 class SetState {
 public:
+    SetState() {};
     SetState(int num_ways);
-    void updateState(int way, bool is_hit, int access_type, vector<int> recency_list);
+    ~SetState();
+    SetState(const SetState& src);
+    vector<WayState*> getWayArray() { return way_array; }
+    void updateState(int way, bool is_hit, int access_type, unsigned *recency_list);
     void resetState(int way, int access_type);
-    WayState* getWayState(int way) { return way_array[way]; }
+    vector<int> flatten();
 
 private:
     vector<WayState*> way_array;
+};
+
+
+//========================================================================//
+// CLASS SAMPLE CHECKPOINT
+//========================================================================//
+class SampleCP {
+public:
+    SampleCP(vector<unsigned long long> _tags, int _num_ways, SetState& _st, SetState& _nxt_st, int _v);
+    ~SampleCP() {}
+    bool updateSample(unsigned long long access_tag);    // return true if the sample is ready to send
+    vector<int> flatten();
+    bool isReady() { return ready; }
+
+private:
+    vector<unsigned long long> tags;
+    vector<char> reused;
+    SetState *state;
+    SetState *next_state;
+    int victim;
+    int reward;
+    int num_ways;
+    bool ready;
 };
 
 
@@ -43,17 +74,20 @@ private:
 class CacheState {
 public:
     CacheState(int num_sets, int num_ways);
+    ~CacheState();
     SetState* getSetState(int set) { return this->set_array[set]; }
-    int getNumSets() { return m_nsets; }
-    int getNumWays() { return m_nways; }
-    
-    void updateState(int set, int way, bool is_hit, int access_type, vector<int> recency_list);
+    vector<SampleCP*> getSetSampleList(int set) { return samples[set]; }
+    void updateState(int set, int way, bool is_hit, int access_type, unsigned *recency_list);
     void resetState(int set, int way, int access_type);
+    void createNewSample(int set, int victim, vector<unsigned long long> tags);
+    void cleanSampleBuffer(int set);
+    int  totalSamples();
 
 private:
     int m_nsets;
     int m_nways;
     vector<SetState*> set_array;
+    vector<vector<SampleCP*>> samples;  // one sample list per set
 };
 
 #endif // CACHE_STATE_H

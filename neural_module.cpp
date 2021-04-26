@@ -8,9 +8,11 @@
 //========================================================================//
 // CLASS NEURALMODULE
 //========================================================================//
-NeuralModule::NeuralModule(int num_sets, int num_ways, string ip_address, int buffer_size) {
+NeuralModule::NeuralModule( int num_sets, int num_ways, 
+                            string ip_address, int port, int buffer_size) {
     m_buffer_size = buffer_size;
     m_ipaddr      = ip_address;
+    m_port        = port; 
     m_sock        = createSocket();
     cache         = new CacheState(num_sets, num_ways);
     connectServer();
@@ -18,7 +20,8 @@ NeuralModule::NeuralModule(int num_sets, int num_ways, string ip_address, int bu
 
 //========================================================================//
 NeuralModule::~NeuralModule() { 
-    disconnectServer(); 
+    disconnectServer();
+    delete cache; 
 }
 
 //========================================================================//
@@ -33,14 +36,12 @@ int NeuralModule::createSocket() {
 void NeuralModule::connectServer() {
     struct sockaddr_in serv_addr;
     memset(&serv_addr, '0', sizeof(serv_addr));
-
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(m_port);
 
     // Convert IPv4 and IPv6 addresses from text to binary form
     if (inet_pton(AF_INET, m_ipaddr.c_str(), &serv_addr.sin_addr) <= 0)
-        throw "Invalid address/ Address not supported";
-
+        throw "Invalid address / Address not supported";
     if (connect(m_sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
         throw "Connection Failed";
 }
@@ -62,7 +63,6 @@ string NeuralModule::sendMessage(string msg) {
 string NeuralModule::getReply() {
     char buffer[m_buffer_size];
     int valread = read(m_sock, buffer, m_buffer_size);
-
     string reply;
     for (int i=0; i < valread; ++i) 
         reply += buffer[i];
@@ -72,40 +72,69 @@ string NeuralModule::getReply() {
 //========================================================================//
 int NeuralModule::predict(int set_id, int access_type) {
     string reply = sendMessage("make prediction");
-    cout << reply << endl;
 
-    // Build state vector = state of all ways in set
-    vector<double> counters;
-    SetState *victim_set = this->cache->getSetState(set_id);
-    for (int way=0; way < cache->getNumWays(); ++way) {
-        WayState *block = victim_set->getWayState(way);
-        counters.push_back(block->preuse);
-        for (unsigned i=0; i < block->access_type.size(); ++i)
-            counters.push_back(block->access_type[i]);
-        counters.push_back(block->recency);
-        counters.push_back(block->num_hits);
-    }
+    // Get state vector, i.e. state of all ways in set
+    vector<int> state_vector = this->cache->getSetState(set_id)->flatten();
 
-    for (unsigned i=0; i < counters.size(); ++i) {
-        string reply = sendMessage(to_string(counters[i]));
-        cout << reply << endl;
+    // Send state vector to prediction server
+    for (unsigned i=0; i < state_vector.size(); ++i) {
+        reply = sendMessage(to_string(state_vector[i]));
     }
 
     // Server replies the prediction after the "ending" signal is sent
     int victim = stoi(sendMessage("E"));
-    cout << "victim block = " << victim << std::endl;
     this->cache->resetState(set_id, victim, access_type);
+    num_infer++;
+    if (num_infer % 10000 == 0) {
+        cout << "num inferences = " << num_infer << endl;
+    }
     return victim;
 }
 
 //========================================================================//
-void NeuralModule::updateState(int set_id, int way_id, bool is_hit, int access_type, vector<int> recency_list) {
+void NeuralModule::updateState( int set_id, int way_id, bool is_hit, int access_type, 
+                                unsigned *recency_list, unsigned long long access_tag) {
     this->cache->updateState(set_id, way_id, is_hit, access_type, recency_list);
+
+    // Update training samples in the victim set 
+    vector<SampleCP*> sample_list = this->cache->getSetSampleList(set_id);
+    for (unsigned i=0; i < sample_list.size(); ++i) {
+        bool ready = sample_list[i]->updateSample(access_tag);
+        if (ready) {
+            num_samples++;
+            sendSample(sample_list[i]->flatten());
+        }
+    }
+
+    // Remove sent samples to save memory
+    this->cache->cleanSampleBuffer(set_id);
+
+    // Periodically retrain the model every 500 sent samples
+    if (num_samples > 0 && num_samples % 1000 == 0) {
+        // cout << "num samples = " << num_samples << endl;
+        retrain();
+    }
 }
 
 //========================================================================//
 void NeuralModule::retrain() {
     string reply = sendMessage("retrain");
-    cout << reply << endl;
+    long num_retrain = stoi(reply);
+    if (num_retrain % 50 == 0)
+        cout << "num retrain = " << num_retrain << endl;
 }
 
+void NeuralModule::sendSample(vector<int> sample) {
+    string reply = sendMessage("new sample");
+
+    // Send state vector to prediction server
+    for (unsigned i=0; i < sample.size(); ++i) {
+        reply = sendMessage(to_string(sample[i]));
+    }
+    reply = sendMessage("E");
+}
+
+void NeuralModule::addSampleCP( int set_id, int victim, 
+                                vector<unsigned long long> tags) {
+    cache->createNewSample(set_id, victim, tags);
+}

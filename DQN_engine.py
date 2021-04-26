@@ -26,26 +26,17 @@ deprecation._PER_MODULE_WARNING_LIMIT = 0
 
 
 # ==================================================================================== #
-# CLASS SAMPLE
-# ==================================================================================== #
-class Sample:
-    def _init__(self, _state, _action, _next_state, _reward):
-        self.state      = _state
-        self.action     = _action
-        self.next_state = _next_state
-        self.reward     = _reward
-
-
-# ==================================================================================== #
 # CLASS DQN_ENGINE
 # ==================================================================================== #
 class DQNengine:
-    def __init__(self, _num_input, _num_output, replay_size, _checkpt="none"):
+    def __init__(self, _num_features, _num_output, replay_size, _checkpt="none"):
         self.gamma    = 0.95    # discounting factor
         self.alpha    = 0.05    # learning rate
         self.eps      = 0.05    # exploration rate
-        self.network  = createModel(_num_input, _num_output, _checkpt)
         self.num_actions   = _num_output
+        self.num_features  = _num_features
+        self.num_retrains = 0
+        self.network = self.createModel(self.num_actions*self.num_features, _num_output, _checkpt)
         self.replay_buffer = deque(maxlen=replay_size)
         if _checkpt == "none":
             self.mcp_save = ModelCheckpoint('weights.hdf5', save_best_only=True, monitor='loss', mode='min')
@@ -54,7 +45,7 @@ class DQNengine:
         print("New model created\n")
     
     def createModel(self, _num_input, _num_output, _checkpoint):
-        model = Sequential()
+        model = models.Sequential()
         model.add(layers.Dense(16, activation='tanh', input_shape=(_num_input,)))
         model.add(layers.Dense(16, activation='tanh'))
         model.add(layers.Dense(_num_output))
@@ -66,31 +57,28 @@ class DQNengine:
     def predict(self, state):
         if np.random.randint(0,99) < int(self.eps * 100):
             action = np.random.randint(0,self.num_actions)
-            self.num_random_taken += 1
-            print("Random action: " + str(action))
             return action
         else:
             x_input = [state]
             x_input = np.array(x_input)
             action = np.argmax(self.network.predict(x_input))
-            print("Learned action: " + str(action))
             return action 
 
-    def addSample(data):
+    def addSample(self, data):
         state      = []
-        action     = data[15]
         next_state = []
+        action     = data[-2]
         reward     = data[-1]
 
-        for index in range(14):
+        state_length = self.num_features*self.num_actions
+        for index in range(state_length):
             state.append(data[index])
-        for index in range(15, 29)
+        for index in range(state_length, 2*state_length):
             next_state.append(data[index])
         
-        new_sample = Sample(state, action, next_state, reward)
-        self.replay_buffer(new_sample)
+        self.replay_buffer.append((state, int(action), next_state, reward))
 
-    def retrain(self, draw_size=64, train_batch_size=32, num_epochs=5):
+    def retrain(self, draw_size=128, train_batch_size=32, num_epochs=2):
         # sanity check: there must be something in the replay buffer
         assert(len(self.replay_buffer))
         
@@ -109,13 +97,15 @@ class DQNengine:
         next_Q_batches = self.network.predict(next_states_batch)
 
         # update new Q-value: Q(s,a) = Q(s,a) + alpha * (reward + gamma * maxQ(s',a') - Q(s,a))
-        for index in range(len(Q_batches)):
+        for index in range(len(current_Q_batches)):
             current_Q_batches[index][actions_batch[index]] += self.alpha * \
                                                               (rewards_batch[index] + \
                                                               self.gamma * np.max(next_Q_batches[index]) - \
                                                               current_Q_batches[index][actions_batch[index]])  
         
-        self.model.fit(states_batch, Q_batches, batch_size=train_batch_size, verbose=False, epochs=num_epochs)
+        self.network.fit(states_batch, current_Q_batches, batch_size=train_batch_size, \
+                        verbose=False, epochs=num_epochs, callbacks=[self.mcp_save])
+        self.num_retrains += 1    
 
 
 # ==================================================================================== #
@@ -160,7 +150,7 @@ class PredictionServer:
             return
         
         elif request == "make prediction":
-            reply = "Connected"
+            reply = "Request received: make inference"
             connection.send(reply.encode())
             state = []
             while True:
@@ -173,20 +163,18 @@ class PredictionServer:
                     state.append(float(data))
                     reply = "Next"
                     connection.send(reply.encode())
-            print("state: ", state)
 
             prediction = self.prediction_engine.predict(state)
-            print("prediction: ", prediction)
-            reply = str(prediction[0])
+            reply = str(prediction)
             connection.send(reply.encode())
 
         elif request == "retrain":
             self.prediction_engine.retrain()
-            reply = "Retrained successfully"
+            reply = str(prediction_engine.num_retrains)
             connection.send(reply.encode())
 
         elif request == "new sample":
-            reply = "Connected"
+            reply = "Request received: add sample"
             connection.send(reply.encode())
             sample_data = []
             while True:
@@ -235,11 +223,15 @@ def main():
     application_name = sys.argv[1]
     port       = int(sys.argv[2])
     ipaddress  = sys.argv[3]
-    num_input  = int(sys.argv[4])
+    num_features  = int(sys.argv[4])
     num_output = int(sys.argv[5])
 
-    # Currently num_input = 8 per cache line
-    pred_engine = DQNengine(application_name, num_input, num_output, 5000)
+    # L1: 64KB with associativity 4
+    # L2: 256KB with associativity 8
+    # L3: 4MB with associativity 16
+
+    # Currently num_features = 8 per cache line
+    pred_engine = DQNengine(num_features, num_output, 10000, application_name)
     server = PredictionServer(pred_engine)
     server.start(port, ipaddress)
     

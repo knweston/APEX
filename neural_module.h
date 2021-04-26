@@ -10,13 +10,14 @@ using namespace std;
 //========================================================================//
 class NeuralModule {
 public:
-    NeuralModule(int num_sets, int num_ways, string ip_address, int buffer_size=1024);
+    NeuralModule(int num_sets, int num_ways, string ip_address, int port, int buffer_size=1024);
     ~NeuralModule();
     
     int    predict(int set_id, int access_type);
     void   retrain();
-    void   addSample();
-    void   updateState(int set_id, int way_id, bool is_hit, int access_type, vector<int> recency_list);
+    void   sendSample(vector<int> sample);
+    void   addSampleCP(int set_id, int victim, vector<unsigned long long> tags);
+    void   updateState(int set_id, int way_id, bool is_hit, int access_type, unsigned *recency_list, unsigned long long access_tag);
     string sendMessage(string msg);
     string getReply();
     void   connectServer();
@@ -34,7 +35,8 @@ private:
     CacheState *cache;
 
     // prediction stats
-
+    unsigned long long num_samples = 0;
+    unsigned long long num_infer = 0;
 };
 
 #endif // NEURAL_MODULE_H

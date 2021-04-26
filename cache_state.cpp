@@ -1,5 +1,7 @@
 #include "cache_state.h"
 #include <iostream>
+#include <assert.h>
+#include <cstring>
 
 //========================================================================//
 // CLASS SETSTATE
@@ -10,8 +12,18 @@ SetState::SetState(int num_ways) {
         this->way_array.push_back(new WayState());
 }
 
-//========================================================================//
-void SetState::updateState(int way, bool is_hit, int access_type, vector<int> recency_list) {
+SetState::~SetState() {
+    for (unsigned i=0; i < way_array.size(); ++i) {
+        delete way_array[i];
+    }
+    way_array.clear();
+}
+
+SetState::SetState(const SetState& src) {
+    this->way_array = src.way_array;
+}
+
+void SetState::updateState(int way, bool is_hit, int access_type, unsigned *recency_list) {
     // update way preuse distance
     for (unsigned i=0; i < this->way_array.size(); ++i)
         this->way_array[way]->preuse++;
@@ -20,16 +32,17 @@ void SetState::updateState(int way, bool is_hit, int access_type, vector<int> re
     this->way_array[way]->access_type = {0,0,0,0,0};
     this->way_array[way]->access_type[access_type] = 1;
 
-    // update way recency
+    // // update way recency
     for (unsigned i=0; i < this->way_array.size(); ++i)
         this->way_array[i]->recency = recency_list[i];
 
     // update way num_hits
-    if (is_hit)
+    if (is_hit) {
         this->way_array[way]->num_hits++;
+        this->way_array[way]->preuse = 0;
+    }
 }
 
-//========================================================================//
 void SetState::resetState(int way, int access_type) {
     // reset num hits since insertion
     this->way_array[way]->num_hits = 0;
@@ -45,6 +58,76 @@ void SetState::resetState(int way, int access_type) {
     this->way_array[way]->recency = 0;
 }
 
+vector<int> SetState::flatten() {
+    vector<int> state;
+    for (unsigned way=0; way < way_array.size(); ++way) {
+        state.push_back(way_array[way]->preuse);
+        for (unsigned i=0; i < way_array[way]->access_type.size(); ++i)
+            state.push_back(way_array[way]->access_type[i]);
+        state.push_back(way_array[way]->recency);
+        state.push_back(way_array[way]->num_hits);
+    }
+    return state;
+}
+
+
+//========================================================================//
+// CLASS SAMPLE CHECKPOINT
+//========================================================================//
+SampleCP::SampleCP(vector<unsigned long long> _tags, int _num_ways, SetState& _st, SetState& _nxt_st, int _v) {
+    state      = new SetState(_st);
+    next_state = new SetState(_nxt_st);
+    reused     = {'n','n','n','n','n','n','n','n'};
+    num_ways = _num_ways;
+    victim     = _v;
+    reward     = 0;
+    ready      = false;
+    tags       = _tags;
+}
+
+bool SampleCP::updateSample(unsigned long long access_tag) {
+    int other_reused = 0;
+
+    // Check if this is a hit
+    for (int way=0; way < num_ways; ++way) {
+        if (access_tag == tags[way]) {
+            reused[way] = 'y';
+            break;
+        }
+    }
+
+    // Check how many other ways have been reaccessed
+    for (int way=0; way < num_ways; ++way) {
+        if (way != victim && reused[way] == 'y')
+            ++other_reused;
+    }
+
+    // update reward
+    if (reused[victim] == 'n' && other_reused == num_ways-1) {
+        reward = 1;
+        ready = true;
+        return true;
+    }
+    else if (reused[victim] == 'y' && other_reused < num_ways-1) {
+        reward = -1;
+        ready = true;
+        return true;
+    }
+    else
+        return false;
+}
+
+vector<int> SampleCP::flatten() {
+    vector<int> sample = state->flatten();
+    vector<int> next_state_flat = next_state->flatten();
+    for (unsigned i=0; i < next_state_flat.size(); ++i)
+        sample.push_back(next_state_flat[i]);
+    sample.push_back(victim);   // also the selected action
+    sample.push_back(reward);
+    return sample;
+}
+
+
 //========================================================================//
 // CLASS CACHESTATE
 //========================================================================//
@@ -53,16 +136,49 @@ CacheState::CacheState(int num_sets, int num_ways) {
     m_nways = num_ways;
     
     // initialize set state array
-    for (int i=0; i < m_nsets; ++i)
+    for (int i=0; i < m_nsets; ++i) {
         this->set_array.push_back(new SetState(m_nways));
+        vector<SampleCP*> set_samples;
+        this->samples.push_back(set_samples);
+    }
 }
 
-//========================================================================//
-void CacheState::updateState(int set, int way, bool is_hit, int access_type, vector<int> recency_list) {
+CacheState::~CacheState() {
+    for (unsigned i=0; i < set_array.size(); ++i) {
+        delete set_array[i];
+    }
+    set_array.clear();
+}
+
+void CacheState::updateState(int set, int way, bool is_hit, int access_type, unsigned *recency_list) {
     this->set_array[set]->updateState(way, is_hit, access_type, recency_list);
+    
 }
 
-//========================================================================//
 void CacheState::resetState(int set, int way, int access_type) {
     this->set_array[set]->resetState(way, access_type);
+}
+
+void CacheState::createNewSample(int set, int victim, vector<unsigned long long> tags) {
+    // SetState dummy_nxt_state;
+    SampleCP *new_sample = new SampleCP(tags, m_nways, *this->getSetState(set), *this->getSetState(set), victim);
+    samples[set].push_back(new_sample);
+}
+
+void CacheState::cleanSampleBuffer(int set) {
+    for (unsigned i=0; i < samples[set].size(); ++i) {
+        if (samples[set][i]->isReady()) {
+            delete samples[set][i];
+            samples[set].erase(samples[set].begin()+i);
+            i=0;
+        }
+    }
+}
+
+int CacheState::totalSamples() {
+    int size = 0;
+    for (unsigned i=0; i < samples.size(); ++i) {
+        size += samples[i].size();
+    }
+    return size;
 }

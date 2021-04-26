@@ -95,12 +95,9 @@ void CACHE_REPLACEMENT_STATE::InitReplacementState() {
     if (replPolicy != CRC_REPL_CONTESTANT) return;
 
     // Contestants:  ADD INITIALIZATION FOR YOUR HARDWARE HERE
-    if (numsets == 256)
-        neural_module = new NeuralModule(numsets, assoc, "127.0.1.12");
-    else if (numsets == 512)
-        neural_module = new NeuralModule(numsets, assoc, "127.0.2.12");
-    else
-        neural_module = new NeuralModule(numsets, assoc, "127.0.3.12");
+    if (numsets == 4096) {
+        neural_module = new NeuralModule(numsets, assoc, "127.0.3.12", 1212);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +110,7 @@ void CACHE_REPLACEMENT_STATE::InitReplacementState() {
 INT32 CACHE_REPLACEMENT_STATE::GetVictimInSet(  UINT32 tid, UINT32 setIndex, 
                                                 const LINE_STATE *vicSet, UINT32 assoc, 
                                                 Addr_t PC, Addr_t paddr, 
-                                                UINT32 accessType, UINT32 accessSource ) {
+                                                UINT32 accessType, UINT32 accessSource, vector<unsigned long long> tags ) {
     // If no invalid lines, then replace based on replacement policy
     if( replPolicy == CRC_REPL_LRU ) 
     {
@@ -126,7 +123,9 @@ INT32 CACHE_REPLACEMENT_STATE::GetVictimInSet(  UINT32 tid, UINT32 setIndex,
     else if( replPolicy == CRC_REPL_CONTESTANT )
     {
         // Contestants:  ADD YOUR VICTIM SELECTION FUNCTION HERE
-	    return Get_My_Victim(setIndex, accessType);
+        if (accessType == 5) accessType = 3;
+        else if (accessType == 6) accessType = 4;
+	    return Get_My_Victim(setIndex, accessType, tags);
     }
 
     // We should never be here
@@ -160,7 +159,9 @@ void CACHE_REPLACEMENT_STATE::UpdateReplacementState(   UINT32 setIndex, INT32 u
         // Feel free to use any of the input parameters to make
         // updates to your replacement policy
         IncrementTimer();
-        UpdateMyPolicy(setIndex, updateWayID, cacheHit, accessType);
+        if (accessType == 5) accessType = 3;
+        else if (accessType == 6) accessType = 4;
+        UpdateMyPolicy(setIndex, updateWayID, cacheHit, accessType, currLine->tag);
     }
 }
 
@@ -227,17 +228,29 @@ void CACHE_REPLACEMENT_STATE::UpdateLRU( UINT32 setIndex, INT32 updateWayID ) {
 	repl[ setIndex ][ updateWayID ].LRUstackposition = 0;
 }
 
-INT32 CACHE_REPLACEMENT_STATE::Get_My_Victim( UINT32 setIndex, UINT32 accessType ) {
-	return neural_module->predict(setIndex, accessType);
+INT32 CACHE_REPLACEMENT_STATE::Get_My_Victim( UINT32 setIndex, UINT32 accessType, vector<unsigned long long> tags ) {
+    UINT32 victim = 0;
+    if (this->numsets == 4096) {
+        victim = neural_module->predict(setIndex, accessType);
+        neural_module->addSampleCP(setIndex, victim, tags);
+    }
+    else{
+        victim = Get_LRU_Victim(setIndex);
+    }
+	return victim;
 }
 
-void CACHE_REPLACEMENT_STATE::UpdateMyPolicy( UINT32 setIndex, INT32 updateWayID, bool cacheHit, UINT32 accessType ) {
+void CACHE_REPLACEMENT_STATE::UpdateMyPolicy( UINT32 setIndex, INT32 updateWayID, bool cacheHit, UINT32 accessType, UINT64 accessTag ) {
     UpdateLRU(setIndex, updateWayID);
-    vector<int> LRU_list;
-    for (UINT32 way=0; way<assoc; way++) {
-        LRU_list.push_back(repl[setIndex][way].LRUstackposition);
+
+    // Update Policy for LLC
+    if (this->numsets == 4096) {
+        UINT32 lru_list[assoc];
+        for (UINT32 way=0; way<assoc; way++) {
+            lru_list[way] = repl[setIndex][way].LRUstackposition;
+        }
+        neural_module->updateState(setIndex, updateWayID, cacheHit, accessType, lru_list, accessTag);
     }
-	neural_module->updateState(setIndex, updateWayID, cacheHit, accessType, LRU_list);
 }
 
 CACHE_REPLACEMENT_STATE::~CACHE_REPLACEMENT_STATE (void) {}

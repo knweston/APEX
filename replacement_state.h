@@ -64,7 +64,8 @@ private:
     CACHE_REPLACEMENT_STATE( UINT32 _sets, UINT32 _assoc, UINT32 _pol );
     ~CACHE_REPLACEMENT_STATE(void);
     void   IncrementTimer() { num_accesses++; } 
-    INT32  GetVictimInSet( UINT32 tid, UINT32 setIndex, const LINE_STATE *vicSet, UINT32 assoc, Addr_t PC, Addr_t paddr, UINT32 accessType, UINT32 accessSource);
+    INT32  GetVictimInSet( UINT32 tid, UINT32 setIndex, const LINE_STATE *vicSet, UINT32 assoc, Addr_t PC, 
+                            Addr_t paddr, UINT32 accessType, UINT32 accessSource, vector<unsigned long long> tags);
     void   SetReplacementPolicy( UINT32 _pol ) { replPolicy = _pol; } 
     void   UpdateReplacementState( UINT32 setIndex, INT32 updateWayID, const LINE_STATE *currLine, 
                                    UINT32 tid, Addr_t PC, UINT32 accessType, bool cacheHit, UINT32 accessSource);
@@ -73,9 +74,9 @@ private:
     void   InitReplacementState();
     INT32  Get_Random_Victim( UINT32 setIndex );
     INT32  Get_LRU_Victim( UINT32 setIndex );
-    INT32  Get_My_Victim( UINT32 setIndex, UINT32 accessType );
+    INT32  Get_My_Victim( UINT32 setIndex, UINT32 accessType, vector<unsigned long long> tags );
     void   UpdateLRU( UINT32 setIndex, INT32 updateWayID );
-    void   UpdateMyPolicy( UINT32 setIndex, INT32 updateWayID, bool cacheHit, UINT32 accessType );
+    void   UpdateMyPolicy( UINT32 setIndex, INT32 updateWayID, bool cacheHit, UINT32 accessType, UINT64 accessTag );
 };
 
 #endif
