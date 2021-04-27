@@ -38,7 +38,7 @@ class DQNengine:
         if _checkpt == "none":
             self.mcp_save = ModelCheckpoint('weights/'+_app_name+'.hdf5', save_best_only=True, monitor='loss', mode='min')
         else:    
-            self.mcp_save = ModelCheckpoint('weights/'+_checkpt, save_best_only=True, monitor='loss', mode='min')
+            self.mcp_save = ModelCheckpoint(_checkpt, save_best_only=True, monitor='loss', mode='min')
         print("New model created\n")
     
     def createModel(self, _num_input, _num_output, _checkpoint):
@@ -47,7 +47,7 @@ class DQNengine:
         model.add(layers.Dense(16, activation='tanh'))
         model.add(layers.Dense(_num_output))
         if _checkpoint != "none":
-            model.load_weights(_checkpoint+'.hdf5')
+            model.load_weights(_checkpoint)
         model.compile(optimizer='adam', loss='mse', metrics=['mae'])
         return model
     

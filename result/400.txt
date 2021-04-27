@@ -1,0 +1,19 @@
+2021-04-27 15:33:42.848501: W tensorflow/stream_executor/platform/default/dso_loader.cc:60] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: scratch/user/kevin.weston/.local/libffi/lib/:scratch/user/kevin.weston/.local/libffi/lib64/:
+2021-04-27 15:33:42.848712: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2021-04-27 15:33:52.173353: I tensorflow/compiler/jit/xla_cpu_device.cc:41] Not creating XLA devices, tf_xla_enable_xla_devices not set
+2021-04-27 15:33:52.173865: W tensorflow/stream_executor/platform/default/dso_loader.cc:60] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: scratch/user/kevin.weston/.local/libffi/lib/:scratch/user/kevin.weston/.local/libffi/lib64/:
+2021-04-27 15:33:52.173960: W tensorflow/stream_executor/cuda/cuda_driver.cc:326] failed call to cuInit: UNKNOWN ERROR (303)
+2021-04-27 15:33:52.174022: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (tnxt-0641.cluster): /proc/driver/nvidia/version does not exist
+2021-04-27 15:33:52.174858: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2021-04-27 15:33:52.175663: I tensorflow/compiler/jit/xla_gpu_device.cc:99] Not creating XLA devices, tf_xla_enable_xla_devices not set
+opened "/scratch/user/kevin.weston/traces/400.perlbench-50B.trace.gz"
+DAN_POLICY=2
+2021-04-27 15:35:41.769099: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:116] None of the MLIR optimization passes are enabled (registered 2)
+2021-04-27 15:35:41.771028: I tensorflow/core/platform/profile_utils/cpu_utils.cc:112] CPU Frequency: 2399955000 Hz
+LLC 4194304 bytes, 16 assoc
+num inferences = 10000
+num inferences = 20000
+num inferences = 30000
+num inferences = 40000
+num inferences = 50000
