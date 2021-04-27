@@ -17,3 +17,30 @@ num inferences = 20000
 num inferences = 30000
 num inferences = 40000
 num inferences = 50000
+num inferences = 60000
+num inferences = 70000
+num inferences = 80000
+num inferences = 90000
+icount = 100000266, cycles = 100000266
+num inferences = 100000
+num inferences = 110000
+num inferences = 120000
+num inferences = 130000
+num inferences = 140000
+num retrain = 50
+num inferences = 150000
+num inferences = 160000
+num inferences = 170000
+num inferences = 180000
+num inferences = 190000
+num inferences = 200000
+num inferences = 210000
+num inferences = 220000
+icount = 200901096, cycles = 200901096
+num retrain = 100
+num inferences = 230000
+icount = 301780626, cycles = 301780626
+num inferences = 240000
+icount = 401780709, cycles = 401780709
+num inferences = 250000
+num inferences = 260000
