@@ -41,12 +41,13 @@ using namespace std;
 // DO NOT CHANGE THE CONSTRUCTOR PROTOTYPE                                    //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
-CACHE_REPLACEMENT_STATE::CACHE_REPLACEMENT_STATE( UINT32 _sets, UINT32 _assoc, UINT32 _pol ) {
+CACHE_REPLACEMENT_STATE::CACHE_REPLACEMENT_STATE( UINT32 _sets, UINT32 _assoc, UINT32 _pol, string _server_conf_file ) {
 
     numsets      = _sets;
     assoc        = _assoc;
     replPolicy   = _pol;
     num_accesses = 0;
+    server_conf_file = _server_conf_file;
 
     InitReplacementState();
 }
@@ -96,7 +97,7 @@ void CACHE_REPLACEMENT_STATE::InitReplacementState() {
 
     // Contestants:  ADD INITIALIZATION FOR YOUR HARDWARE HERE
     if (numsets == 4096) {
-        neural_module = new NeuralModule("server/server_config.ini", numsets, assoc);
+        neural_module = new NeuralModule(server_conf_file, numsets, assoc);
     }
 }
 

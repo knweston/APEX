@@ -35,11 +35,11 @@ int lg2 (int n) {
 
 // make a cache.  hope blocksize and nsets are a power of 2.
 
-void init_cache (cache *c, int nsets, int assoc, int blocksize, int replacement_policy, int set_shift) {
+void init_cache (cache *c, int nsets, int assoc, int blocksize, int replacement_policy, string server_conf_file, int set_shift) {
 	int i, j;
 	c->sets = new set[nsets];
 	c->replacement_policy = replacement_policy;
-	c->repl = new CACHE_REPLACEMENT_STATE (nsets, assoc, replacement_policy);
+	c->repl = new CACHE_REPLACEMENT_STATE (nsets, assoc, replacement_policy, server_conf_file);
 	c->set_shift = set_shift;
 	c->nsets = nsets;
 	c->assoc = assoc;

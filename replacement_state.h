@@ -54,6 +54,7 @@ private:
     UINT32 assoc;
     UINT32 replPolicy;
     COUNTER num_accesses;  // tracks # of references to the cache
+    string server_conf_file;
 
     // CONTESTANTS:  Add extra state for cache here
 
@@ -61,7 +62,7 @@ private:
     ostream & PrintStats(ostream &out);
 
     // The constructor CAN NOT be changed
-    CACHE_REPLACEMENT_STATE( UINT32 _sets, UINT32 _assoc, UINT32 _pol );
+    CACHE_REPLACEMENT_STATE( UINT32 _sets, UINT32 _assoc, UINT32 _pol, string _server_conf_file );
     ~CACHE_REPLACEMENT_STATE(void);
     void   IncrementTimer() { num_accesses++; } 
     INT32  GetVictimInSet( UINT32 tid, UINT32 setIndex, const LINE_STATE *vicSet, UINT32 assoc, Addr_t PC, 

@@ -34,11 +34,12 @@ def readIPConfig(filename):
 
 def main():
     app_name     = sys.argv[1]
-    weight_file  = sys.argv[2]     
-    num_features = int(sys.argv[3])
-    num_output   = int(sys.argv[4])
-    port         = readPortConfig("server/server_config.ini")
-    ip_address   = readIPConfig("server/server_config.ini")
+    weight_file  = sys.argv[2]
+    server_conf  = sys.argv[3]  
+    num_features = int(sys.argv[4])
+    num_output   = int(sys.argv[5])
+    port         = readPortConfig(server_conf)
+    ip_address   = readIPConfig(server_conf)
 
     # Currently num_features = 8 per cache line
     pred_engine = DQNengine(num_features, num_output, 20000, app_name, _checkpt=weight_file)

@@ -85,6 +85,6 @@ struct cache {
 	}
 };
 
-void init_cache (cache *c, int nsets, int assoc, int blocksize, int policy, int set_shift);
+void init_cache (cache *c, int nsets, int assoc, int blocksize, int policy, string server_conf_file, int set_shift);
 bool cache_access (cache *c, unsigned long long int address, unsigned long long int, unsigned int, int op, unsigned int core);
 unsigned int memory_access (cache *l1, cache *l2, cache *l3, unsigned long long int address, unsigned long long int, unsigned int, int op, unsigned int);

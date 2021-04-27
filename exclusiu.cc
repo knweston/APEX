@@ -71,6 +71,7 @@ unsigned long long int cycles[MAX_THREADS], cycles_at_warming[MAX_THREADS], inst
 void print_stats (void);
 double getipc (const char *);
 int dan_set_shift = 0, dan_warm_inst = 500000000, dan_policy = 0;
+char server_conf_file[1200];
 unsigned long long int 
 	//dan_max_inst = 1000000000, 
 	dan_max_inst = 1000000000, 
@@ -87,6 +88,11 @@ char benchmark_name[1000];
                 char *s = getenv (name); \
                 if (!s) { if (0) fprintf (stderr, "warning: parameter %s not found in environment\n", name);} \
                 else { sscanf (s, "%lld", &var); fprintf (stderr, "%s=%lld\n", name, var); } }
+
+#define GET_SERVER_CONFIG(name,var) { \
+                char *s = getenv (name); \
+                if (!s) { if (0) fprintf (stderr, "warning: parameter %s not found in environment\n", name);} \
+                else { sscanf (s, "%s", var); fprintf (stderr, "%s=%s\n", name, var); } }
 
 FILE *traceout = NULL;
 
@@ -110,6 +116,7 @@ int main (int argc, char *argv[]) {
 	GET_LL_PARAM ("DAN_MAX_CYCLE", dan_max_cycle);
 	GET_PARAM ("DAN_WARM_INST", dan_warm_inst);
 	GET_PARAM ("DAN_SET_SHIFT", dan_set_shift);
+	GET_SERVER_CONFIG("SERVER_CONF_FILE", server_conf_file);
 	char *s = getenv ("BENCHMARK_NAME");
 	if (s) strcpy (benchmark_name, s); else strcpy (benchmark_name, "unknown");
 
@@ -122,6 +129,7 @@ int main (int argc, char *argv[]) {
 			L1_ASSOC, 	// L1 associativity
 			L1_BLOCKSIZE, 	// L1 cache block size
 			dan_policy, 	// L1 replacement policy
+			server_conf_file, // DQN server port/ip config
 			0);
 
 		// initialize L2 cache
@@ -131,6 +139,7 @@ int main (int argc, char *argv[]) {
 			L2_ASSOC, 	// L2 cache associativity
 			L2_BLOCKSIZE, 	// L2 cache block size
 			dan_policy, 	// L1 replacement policy
+			server_conf_file, // DQN server port/ip config
 			0);
 	}
 
@@ -141,6 +150,7 @@ int main (int argc, char *argv[]) {
 		LLC_ASSOC, 	// last-level cache associativity
 		LLC_BLOCKSIZE, 	// last-level cache block size
 		dan_policy, 	// last-level cache replacement policy; 0=lru, 1=rand, etc. as in CRC
+		server_conf_file, // DQN server port/ip config
 		dan_set_shift);	// number of lower-order bits in set index to ignore; safe to set to 0 here
 
 	// prime the traces
