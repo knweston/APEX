@@ -166,7 +166,7 @@ void NeuralModule::updateState( int set_id, int way_id, bool is_hit, int access_
     this->cache->cleanSampleBuffer(set_id);
 
     // Periodically retrain the model every 500 sent samples
-    if (num_samples > 0 && num_samples % 1000 == 0) {
+    if (num_samples > 0 && num_samples % 5000 == 0) {
         retrain();
     }
 }

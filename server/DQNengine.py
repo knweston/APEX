@@ -27,18 +27,18 @@ deprecation._PER_MODULE_WARNING_LIMIT = 0
 # ==================================================================================== #
 class DQNengine:
     def __init__(self, _num_features, _num_output, _rep_size, _app_name, _checkpt="none"):
-        self.gamma    = 0.95    # discounting factor
-        self.alpha    = 0.05    # learning rate
-        self.eps      = 0.05    # exploration rate
-        self.num_actions   = _num_output
-        self.num_features  = _num_features
+        self.gamma        = 0.95    # discounting factor
+        self.alpha        = 0.05    # learning rate
+        self.eps          = 0.05    # exploration rate
+        self.num_actions  = _num_output
+        self.num_features = _num_features
         self.num_retrains = 0
         self.network = self.createModel(self.num_actions*self.num_features, _num_output, _checkpt)
         self.replay_buffer = deque(maxlen=_rep_size)
         if _checkpt == "none":
-            self.mcp_save = ModelCheckpoint(_app_name+'.hdf5', save_best_only=True, monitor='loss', mode='min')
+            self.mcp_save = ModelCheckpoint('weights/'+_app_name+'.hdf5', save_best_only=True, monitor='loss', mode='min')
         else:    
-            self.mcp_save = ModelCheckpoint(_checkpt+'.hdf5', save_best_only=True, monitor='loss', mode='min')
+            self.mcp_save = ModelCheckpoint('weights/'+_checkpt, save_best_only=True, monitor='loss', mode='min')
         print("New model created\n")
     
     def createModel(self, _num_input, _num_output, _checkpoint):
@@ -75,7 +75,7 @@ class DQNengine:
         
         self.replay_buffer.append((state, int(action), next_state, reward))
 
-    def retrain(self, draw_size=128, train_batch_size=32, num_epochs=2):
+    def retrain(self, draw_size=1000, train_batch_size=32, num_epochs=3):
         # sanity check: there must be something in the replay buffer
         assert(len(self.replay_buffer))
         
