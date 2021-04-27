@@ -10,7 +10,7 @@ using namespace std;
 //========================================================================//
 class NeuralModule {
 public:
-    NeuralModule(int num_sets, int num_ways, string ip_address, int port, int buffer_size=1024);
+    NeuralModule(string conf_file, int num_sets, int num_ways, int buffer_size=1024);
     ~NeuralModule();
     
     int    predict(int set_id, int access_type);

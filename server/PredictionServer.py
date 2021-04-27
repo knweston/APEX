@@ -1,0 +1,110 @@
+import os
+import socket
+
+# ==================================================================================== #
+# CLASS PREDICTION_SERVER
+# ==================================================================================== #
+class PredictionServer:
+    def __init__(self, pred_engine):
+        self.prediction_engine = pred_engine
+        self.done_episodes     = 0
+        self.complete_signal   = 0
+
+    # start connection with client
+    def start_server(self, port_no, ipaddress=''):
+        # create a socket object
+        s = socket.socket()
+        print("Socket successfully created")
+
+        # max wait time = 1200s
+        s.settimeout(1200)
+
+        # reserve a port on your computer in our
+        # case it is 12345 but it can be anything
+        port = port_no
+
+        # next bind to the port
+        # we have not typed any ip in the ip field
+        # instead we have input an empty string
+        # this makes the server listen to requests
+        # coming from other computers on the network
+        s.bind((ipaddress, port))
+        print("socket binded to %s" % (port))
+
+        # put the socket into listening mode
+        s.listen(5)
+        print("socket is listening")
+        return s
+    
+    # process client request
+    def process_request(self, request, connection):
+        
+        if len(request) == 0:
+            return
+        
+        elif request == "make prediction":
+            reply = "Request received: make inference"
+            connection.send(reply.encode())
+            state = []
+            while True:
+                data = connection.recv(1024).decode()
+                if len(data) == 0:
+                    break
+                elif data == "E":
+                    break
+                else:
+                    state.append(float(data))
+                    reply = "Next"
+                    connection.send(reply.encode())
+
+            prediction = self.prediction_engine.predict(state)
+            reply = str(prediction)
+            connection.send(reply.encode())
+
+        elif request == "retrain":
+            self.prediction_engine.retrain()
+            reply = str(self.prediction_engine.num_retrains)
+            connection.send(reply.encode())
+
+        elif request == "new sample":
+            reply = "Request received: add sample"
+            connection.send(reply.encode())
+            sample_data = []
+            while True:
+                data = connection.recv(1024).decode()
+                if len(data) == 0:
+                    break
+                elif data == "E":
+                    break
+                else:
+                    sample_data.append(float(data))
+                    reply = "Next"
+                    connection.send(reply.encode())
+            self.prediction_engine.addSample(sample_data)
+            reply = "New sample added"
+            connection.send(reply.encode())
+
+        elif request == "disconnect":
+            self.complete_signal = 1
+            reply = "Server disconnected successfully"
+            connection.send(reply.encode())
+
+        else:
+            reply = "unknown request"
+            connection.send(reply.encode())
+
+    def start(self, port_no, ipaddress):
+        sock = self.start_server(port_no, ipaddress)
+        
+        # Establish connection with client 0.
+        conn, addr = sock.accept()
+        print('Connected to ', addr)
+        
+        self.complete_signal = 0
+        while self.complete_signal < 1:
+            request = conn.recv(1024).decode()
+            self.process_request(request, conn)
+
+        # Close the connection with the client
+        conn.close()
+    

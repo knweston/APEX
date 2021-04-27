@@ -96,7 +96,7 @@ void CACHE_REPLACEMENT_STATE::InitReplacementState() {
 
     // Contestants:  ADD INITIALIZATION FOR YOUR HARDWARE HERE
     if (numsets == 4096) {
-        neural_module = new NeuralModule(numsets, assoc, "127.0.3.12", 1212);
+        neural_module = new NeuralModule("server/server_config.ini", numsets, assoc);
     }
 }
 

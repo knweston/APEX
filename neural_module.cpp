@@ -4,15 +4,71 @@
 #include <unistd.h>
 #include <iostream>
 #include <string.h>
+#include <fstream>
+
+//========================================================================//
+// HELPER FUNCTIONS
+//========================================================================//
+int readPortConfig(string filename) {
+    ifstream conf_file(filename);
+    string line;
+    int port_num=-1;
+    if (conf_file.is_open()) {
+        while(getline(conf_file, line)) {
+            if (line.find("port") != string::npos) {
+                unsigned long split_index=0;
+                for (; split_index < line.size(); ++split_index) {
+                    if (line[split_index] == '=') {
+                        split_index++;
+                        break;
+                    }
+                }
+                string temp;
+                for (; split_index < line.size(); ++split_index) {
+                    temp += line[split_index];
+                }
+                port_num = stoi(temp);
+                break;
+            }
+        }
+        conf_file.close();
+    }
+    return port_num;
+}
+
+string readIPConfig(string filename) {
+    ifstream conf_file(filename);
+    string line;
+    string ip_address;
+    if (conf_file.is_open()) {
+        while(getline(conf_file, line)) {
+            if (line.find("ipaddress") != string::npos) {
+                unsigned long split_index=0;
+                for (; split_index < line.size(); ++split_index) {
+                    if (line[split_index] == '=') {
+                        split_index++;
+                        break;
+                    }
+                }
+                for (; split_index < line.size(); ++split_index) {
+                    if (line[split_index] != ' ')
+                        ip_address += line[split_index];
+                }
+                break;
+            }
+        }
+        conf_file.close();
+    }
+    return ip_address;
+}
 
 //========================================================================//
 // CLASS NEURALMODULE
 //========================================================================//
-NeuralModule::NeuralModule( int num_sets, int num_ways, 
-                            string ip_address, int port, int buffer_size) {
+NeuralModule::NeuralModule(string conf_file, int num_sets, int num_ways, int buffer_size) {
+    m_port        = readPortConfig(conf_file);
+    m_ipaddr      = readIPConfig(conf_file);
     m_buffer_size = buffer_size;
-    m_ipaddr      = ip_address;
-    m_port        = port; 
     m_sock        = createSocket();
     cache         = new CacheState(num_sets, num_ways);
     connectServer();
@@ -111,7 +167,6 @@ void NeuralModule::updateState( int set_id, int way_id, bool is_hit, int access_
 
     // Periodically retrain the model every 500 sent samples
     if (num_samples > 0 && num_samples % 1000 == 0) {
-        // cout << "num samples = " << num_samples << endl;
         retrain();
     }
 }
