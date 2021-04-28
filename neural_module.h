@@ -13,11 +13,11 @@ public:
     NeuralModule(string conf_file, int num_sets, int num_ways, int buffer_size=1024);
     ~NeuralModule();
     
-    int    predict(int set_id, int access_type);
+    int    predict(int set_id, int access_type, vector<unsigned long long> tags);
     void   retrain();
     void   sendSample(vector<int> sample);
-    void   addSampleCP(int set_id, int victim, vector<unsigned long long> tags);
-    void   updateState(int set_id, int way_id, bool is_hit, int access_type, unsigned *recency_list, unsigned long long access_tag);
+    void   updateState( int set_id, int way_id, bool is_hit, int access_type, 
+                        unsigned *recency_list, unsigned long long access_tag );
     string sendMessage(string msg);
     string getReply();
     void   connectServer();

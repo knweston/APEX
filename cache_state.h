@@ -12,6 +12,8 @@ struct WayState {
 
     ~WayState() {}
 
+    WayState(const WayState& src);
+
     // preuse distance
     int preuse = 0;
 
@@ -23,6 +25,8 @@ struct WayState {
 
     // hits since insertion
     int num_hits = 0;
+
+    void print();
 };
 
 
@@ -50,9 +54,10 @@ private:
 //========================================================================//
 class SampleCP {
 public:
-    SampleCP(vector<unsigned long long> _tags, int _num_ways, SetState& _st, SetState& _nxt_st, int _v);
+    SampleCP(vector<unsigned long long> _tags, int _num_ways, 
+             SetState& _st, SetState& _nxt_st, int _v);
     ~SampleCP() {}
-    bool updateSample(unsigned long long access_tag);    // return true if the sample is ready to send
+    bool updateSample(unsigned long long access_tag); // return true if the sample is ready to send
     vector<int> flatten();
     bool isReady() { return ready; }
 
@@ -79,7 +84,8 @@ public:
     vector<SampleCP*> getSetSampleList(int set) { return samples[set]; }
     void updateState(int set, int way, bool is_hit, int access_type, unsigned *recency_list);
     void resetState(int set, int way, int access_type);
-    void createNewSample(int set, int victim, vector<unsigned long long> tags);
+    void createNewSample(int set, int victim, SetState &curr_st, SetState &next_st, 
+                        vector<unsigned long long> tags);
     void cleanSampleBuffer(int set);
     int  totalSamples();
 

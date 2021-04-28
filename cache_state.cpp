@@ -1,8 +1,28 @@
 #include "cache_state.h"
 #include <iostream>
-#include <assert.h>
 #include <cstring>
 
+using namespace std;
+
+//========================================================================//
+// CLASS WAYSTATE
+//========================================================================//
+WayState::WayState(const WayState& src) {
+        this->preuse      = src.preuse;
+        this->access_type = src.access_type;
+        this->recency     = src.recency;
+        this->num_hits    = src.num_hits;
+    }
+
+void WayState::print() {
+    cout << "preuse      = " << preuse << endl;
+    cout << "recency     = " << recency << endl;
+    cout << "num_hits    = " << num_hits << endl;
+    for (unsigned i=0; i < access_type.size(); ++i) {
+        if (access_type[i] == 1)
+            cout << "access_type = " << i << endl;
+    }
+}
 //========================================================================//
 // CLASS SETSTATE
 //========================================================================//
@@ -20,7 +40,8 @@ SetState::~SetState() {
 }
 
 SetState::SetState(const SetState& src) {
-    this->way_array = src.way_array;
+    for (unsigned i=0; i < src.way_array.size(); ++i)
+        this->way_array.push_back(new WayState(*src.way_array[i]));
 }
 
 void SetState::updateState(int way, bool is_hit, int access_type, unsigned *recency_list) {
@@ -159,9 +180,8 @@ void CacheState::resetState(int set, int way, int access_type) {
     this->set_array[set]->resetState(way, access_type);
 }
 
-void CacheState::createNewSample(int set, int victim, vector<unsigned long long> tags) {
-    // SetState dummy_nxt_state;
-    SampleCP *new_sample = new SampleCP(tags, m_nways, *this->getSetState(set), *this->getSetState(set), victim);
+void CacheState::createNewSample(int set, int victim, SetState &curr_st, SetState &next_st, vector<unsigned long long> tags) {
+    SampleCP *new_sample = new SampleCP(tags, m_nways, curr_st, next_st, victim);
     samples[set].push_back(new_sample);
 }
 

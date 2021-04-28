@@ -126,20 +126,31 @@ string NeuralModule::getReply() {
 }
 
 //========================================================================//
-int NeuralModule::predict(int set_id, int access_type) {
+int NeuralModule::predict(int set_id, int access_type, vector<unsigned long long> tags) {
     string reply = sendMessage("make prediction");
 
     // Get state vector, i.e. state of all ways in set
     vector<int> state_vector = this->cache->getSetState(set_id)->flatten();
 
-    // Send state vector to prediction server
+    // Send state vector to the prediction server
+    string data = "";
     for (unsigned i=0; i < state_vector.size(); ++i) {
-        reply = sendMessage(to_string(state_vector[i]));
+        data += to_string(state_vector[i]) + "_";
     }
+    data.pop_back();
 
-    // Server replies the prediction after the "ending" signal is sent
-    int victim = stoi(sendMessage("E"));
+    // Server replies the prediction
+    int victim = stoi(sendMessage(data));
+
+    // Save the current state of the victim set (to create new sample)
+    SetState victim_set_state = *(cache->getSetState(set_id));
+
+    // Reset the state of the victim set
     this->cache->resetState(set_id, victim, access_type);
+
+    // Create a new sample on the simulator side
+    cache->createNewSample(set_id, victim, victim_set_state, *this->cache->getSetState(set_id), tags);
+
     num_infer++;
     if (num_infer % 10000 == 0) {
         cout << "num inferences = " << num_infer << endl;
@@ -175,21 +186,18 @@ void NeuralModule::updateState( int set_id, int way_id, bool is_hit, int access_
 void NeuralModule::retrain() {
     string reply = sendMessage("retrain");
     long num_retrain = stoi(reply);
-    if (num_retrain % 50 == 0)
+    if (num_retrain % 25 == 0)
         cout << "num retrain = " << num_retrain << endl;
 }
 
 void NeuralModule::sendSample(vector<int> sample) {
     string reply = sendMessage("new sample");
 
-    // Send state vector to prediction server
+    // Send sample data to prediction server
+    string data = "";
     for (unsigned i=0; i < sample.size(); ++i) {
-        reply = sendMessage(to_string(sample[i]));
+        data += to_string(sample[i]) + "_";
     }
-    reply = sendMessage("E");
-}
-
-void NeuralModule::addSampleCP( int set_id, int victim, 
-                                vector<unsigned long long> tags) {
-    cache->createNewSample(set_id, victim, tags);
+    data.pop_back();
+    reply = sendMessage(data);
 }

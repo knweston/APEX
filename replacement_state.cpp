@@ -232,8 +232,7 @@ void CACHE_REPLACEMENT_STATE::UpdateLRU( UINT32 setIndex, INT32 updateWayID ) {
 INT32 CACHE_REPLACEMENT_STATE::Get_My_Victim( UINT32 setIndex, UINT32 accessType, vector<unsigned long long> tags ) {
     UINT32 victim = 0;
     if (this->numsets == 4096) {
-        victim = neural_module->predict(setIndex, accessType);
-        neural_module->addSampleCP(setIndex, victim, tags);
+        victim = neural_module->predict(setIndex, accessType, tags);
     }
     else{
         victim = Get_LRU_Victim(setIndex);

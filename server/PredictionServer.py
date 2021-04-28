@@ -46,42 +46,33 @@ class PredictionServer:
             reply = "Request received: make inference"
             connection.send(reply.encode())
             state = []
-            while True:
-                data = connection.recv(1024).decode()
-                if len(data) == 0:
-                    break
-                elif data == "E":
-                    break
-                else:
-                    state.append(float(data))
-                    reply = "Next"
-                    connection.send(reply.encode())
-
+            data = connection.recv(1024).decode()
+            if len(data) == 0:
+                reply = "Empty message"
+            else:
+                state = data.split("_")
+                state = [float(numeric_str) for numeric_str in state]
             prediction = self.prediction_engine.predict(state)
             reply = str(prediction)
-            connection.send(reply.encode())
-
-        elif request == "retrain":
-            self.prediction_engine.retrain()
-            reply = str(self.prediction_engine.num_retrains)
             connection.send(reply.encode())
 
         elif request == "new sample":
             reply = "Request received: add sample"
             connection.send(reply.encode())
             sample_data = []
-            while True:
-                data = connection.recv(1024).decode()
-                if len(data) == 0:
-                    break
-                elif data == "E":
-                    break
-                else:
-                    sample_data.append(float(data))
-                    reply = "Next"
-                    connection.send(reply.encode())
+            data = connection.recv(1024).decode()
+            if len(data) == 0:
+                reply = "Empty message"
+            else:
+                sample_data = data.split("_")
+                sample_data = [float(numeric_str) for numeric_str in sample_data]
             self.prediction_engine.addSample(sample_data)
             reply = "New sample added"
+            connection.send(reply.encode())
+
+        elif request == "retrain":
+            self.prediction_engine.retrain()
+            reply = str(self.prediction_engine.num_retrains)
             connection.send(reply.encode())
 
         elif request == "disconnect":
