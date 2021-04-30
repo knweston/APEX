@@ -284,6 +284,10 @@ int main (int argc, char *argv[]) {
 		if (done_inst) break;
 	}
 	print_stats ();
+
+	// Terminate connection to prediction server
+	LLC.repl->finishExecution();
+	
 	if (traceout) fclose (traceout);
 	//for (i=0; i<ncores; i++) delete readers[i];
 	if (mintracefp) fclose (mintracefp);

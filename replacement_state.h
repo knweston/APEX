@@ -70,6 +70,7 @@ private:
     void   SetReplacementPolicy( UINT32 _pol ) { replPolicy = _pol; } 
     void   UpdateReplacementState( UINT32 setIndex, INT32 updateWayID, const LINE_STATE *currLine, 
                                    UINT32 tid, Addr_t PC, UINT32 accessType, bool cacheHit, UINT32 accessSource);
+    void   finishExecution() { neural_module->disconnectServer(); }
     
   private:  
     void   InitReplacementState();

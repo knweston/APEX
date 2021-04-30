@@ -86,16 +86,16 @@ class PredictionServer:
 
     def start(self, port_no, ipaddress):
         sock = self.start_server(port_no, ipaddress)
-        
-        # Establish connection with client 0.
-        conn, addr = sock.accept()
-        print('Connected to ', addr)
-        
-        self.complete_signal = 0
-        while self.complete_signal < 1:
-            request = conn.recv(1024).decode()
-            self.process_request(request, conn)
+        while True:
+            # Establish connection with client 0.
+            conn, addr = sock.accept()
+            print('Connected to ', addr)
+            
+            self.complete_signal = 0
+            while self.complete_signal < 1:
+                request = conn.recv(1024).decode()
+                self.process_request(request, conn)
 
-        # Close the connection with the client
-        conn.close()
+            # Close the connection with the client
+            conn.close()
     
