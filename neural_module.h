@@ -15,7 +15,7 @@ public:
     
     int    predict(int set_id, int access_type, vector<unsigned long long> tags);
     void   retrain();
-    void   sendSample(vector<int> sample);
+    void   sendSample(vector<double> sample);
     void   updateState( int set_id, int way_id, bool is_hit, int access_type, 
                         unsigned *recency_list, unsigned long long access_tag );
     string sendMessage(string msg);

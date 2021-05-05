@@ -46,7 +46,7 @@ class PredictionServer:
             reply = "Request received: make inference"
             connection.send(reply.encode())
             state = []
-            data = connection.recv(1024).decode()
+            data = connection.recv(4096).decode()
             if len(data) == 0:
                 reply = "Empty message"
             else:
@@ -60,7 +60,7 @@ class PredictionServer:
             reply = "Request received: add sample"
             connection.send(reply.encode())
             sample_data = []
-            data = connection.recv(1024).decode()
+            data = connection.recv(4096).decode()
             if len(data) == 0:
                 reply = "Empty message"
             else:
@@ -93,7 +93,7 @@ class PredictionServer:
             
             self.complete_signal = 0
             while self.complete_signal < 1:
-                request = conn.recv(1024).decode()
+                request = conn.recv(4096).decode()
                 self.process_request(request, conn)
 
             # Close the connection with the client

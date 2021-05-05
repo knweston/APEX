@@ -130,7 +130,7 @@ int NeuralModule::predict(int set_id, int access_type, vector<unsigned long long
     string reply = sendMessage("make prediction");
 
     // Get state vector, i.e. state of all ways in set
-    vector<int> state_vector = this->cache->getSetState(set_id)->flatten();
+    vector<double> state_vector = this->cache->getSetState(set_id)->flatten(false);
 
     // Send state vector to the prediction server
     string data = "";
@@ -169,7 +169,7 @@ void NeuralModule::updateState( int set_id, int way_id, bool is_hit, int access_
         bool ready = sample_list[i]->updateSample(access_tag);
         if (ready) {
             num_samples++;
-            sendSample(sample_list[i]->flatten());
+            sendSample(sample_list[i]->flatten(false));
         }
     }
 
@@ -190,7 +190,7 @@ void NeuralModule::retrain() {
         cout << "num retrain = " << num_retrain << endl;
 }
 
-void NeuralModule::sendSample(vector<int> sample) {
+void NeuralModule::sendSample(vector<double> sample) {
     string reply = sendMessage("new sample");
 
     // Send sample data to prediction server

@@ -42,7 +42,7 @@ public:
     vector<WayState*> getWayArray() { return way_array; }
     void updateState(int way, bool is_hit, int access_type, unsigned *recency_list);
     void resetState(int way, int access_type);
-    vector<int> flatten();
+    vector<double> flatten(bool normalize=true);
 
 private:
     vector<WayState*> way_array;
@@ -58,7 +58,7 @@ public:
              SetState& _st, SetState& _nxt_st, int _v);
     ~SampleCP() {}
     bool updateSample(unsigned long long access_tag); // return true if the sample is ready to send
-    vector<int> flatten();
+    vector<double> flatten(bool normalize=true);
     bool isReady() { return ready; }
 
 private:

@@ -3,6 +3,29 @@
 #include <cstring>
 
 using namespace std;
+//========================================================================//
+// HELPER FUNCTIONS
+//========================================================================//
+int argmax(vector<int> _input) {
+    int max_value = _input[0];
+    int max_index = 0;
+    for (unsigned i=1; i < _input.size(); ++i) {
+        if (_input[i] > max_value) {
+            max_value = _input[i];
+            max_index = i;
+        }
+    }
+    return max_index;
+}
+
+int max(vector<int> _input) {
+    int max_value = _input[0];
+    for (unsigned i=1; i < _input.size(); ++i) {
+        if (_input[i] > max_value)
+            max_value = _input[i];
+    }
+    return max_value;
+}
 
 //========================================================================//
 // CLASS WAYSTATE
@@ -79,14 +102,32 @@ void SetState::resetState(int way, int access_type) {
     this->way_array[way]->recency = 0;
 }
 
-vector<int> SetState::flatten() {
-    vector<int> state;
+vector<double> SetState::flatten(bool normalize) {
+    vector<double> state;
+    vector<int> numhit_arr;
+    vector<int> preuse_arr;
     for (unsigned way=0; way < way_array.size(); ++way) {
-        state.push_back(way_array[way]->preuse);
-        for (unsigned i=0; i < way_array[way]->access_type.size(); ++i)
-            state.push_back(way_array[way]->access_type[i]);
-        state.push_back(way_array[way]->recency);
-        state.push_back(way_array[way]->num_hits);
+        numhit_arr.push_back(way_array[way]->num_hits);
+        preuse_arr.push_back(way_array[way]->preuse);
+    }
+    int max_preuse = max(preuse_arr);
+    int max_numhit = max(numhit_arr);
+
+    for (unsigned way=0; way < way_array.size(); ++way) {
+        if (normalize) {
+            state.push_back((double)way_array[way]->preuse/max_preuse);
+            for (unsigned i=0; i < way_array[way]->access_type.size(); ++i)
+                state.push_back(way_array[way]->access_type[i]);
+            state.push_back((double)way_array[way]->recency/way_array.size());
+            state.push_back((double)way_array[way]->num_hits/max_numhit);
+        }
+        else {
+            state.push_back((double)way_array[way]->preuse/max_preuse);
+            for (unsigned i=0; i < way_array[way]->access_type.size(); ++i)
+                state.push_back(way_array[way]->access_type[i]);
+            state.push_back((double)way_array[way]->recency/way_array.size());
+            state.push_back((double)way_array[way]->num_hits/max_numhit);
+        }
     }
     return state;
 }
@@ -138,12 +179,18 @@ bool SampleCP::updateSample(unsigned long long access_tag) {
         return false;
 }
 
-vector<int> SampleCP::flatten() {
-    vector<int> sample = state->flatten();
-    vector<int> next_state_flat = next_state->flatten();
-    for (unsigned i=0; i < next_state_flat.size(); ++i)
+vector<double> SampleCP::flatten(bool normalize) {
+    vector<double> sample = state->flatten(normalize);
+    vector<double> next_state_flat = next_state->flatten(normalize);
+    for (unsigned i=0; i < next_state_flat.size(); ++i) {
         sample.push_back(next_state_flat[i]);
-    sample.push_back(victim);   // also the selected action
+    }
+    if (normalize) {
+        sample.push_back((double)victim/num_ways);   // also the selected action
+    }
+    else {
+        sample.push_back(victim);
+    }
     sample.push_back(reward);
     return sample;
 }

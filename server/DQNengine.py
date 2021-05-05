@@ -43,8 +43,8 @@ class DQNengine:
     
     def createModel(self, _num_input, _num_output, _checkpoint):
         model = models.Sequential()
-        model.add(layers.Dense(16, activation='tanh', input_shape=(_num_input,)))
-        model.add(layers.Dense(16, activation='tanh'))
+        model.add(layers.Dense(32, activation='tanh', input_shape=(_num_input,)))
+        model.add(layers.Dense(32, activation='tanh'))
         model.add(layers.Dense(_num_output))
         if _checkpoint != "none":
             model.load_weights(_checkpoint)
