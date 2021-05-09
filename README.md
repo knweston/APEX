@@ -16,7 +16,7 @@ After a while, the cache simulator computes the reward and sends it back to the 
 - Download the memory trace files: http://faculty.cse.tamu.edu/djimenez/614/traces.tar
 - Export the desired replacement policy by entering: export DAN_POLICY=[#]; with [#] ranges from 0-2. 0 is LRU, 1 is random, 2 is APEX. For example, if you want to run APEX policy, type: export DAN_POLICY=2; At default, the simulator will use the LRU replacement policy.
 - Export the server configuration file location: export SERVER_CONF=server/config/filename; there is one config for each trace. All config files are stored in server/config
-- Two terminal windows is required to run this simulator: one is for the Q-learning server, one for the cache simulator. Note that the Q-learning server must be run before the cache simulator.
+- Two terminal windows are required to run this simulator: one for the Q-learning server, another for the cache simulator. Note that the Q-learning server must be run before starting the cache simulator.
 
 To start the server, enter: python3 server/main.py trace_name weight_file 8 16
 
