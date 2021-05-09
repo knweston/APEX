@@ -7,7 +7,7 @@ When there is a replacement request, the cache simulator will send a message to 
 
 After a while, the cache simulator computes the reward and sends it back to the Q-learning server. The server saves the reward along with the previous cache state as a training sample in the replay buffer. For every 5000 training sample collected, the Q-learning neural network is retrained.
 
-# Setup Instruction
+# Compilation
 - Clone this github repo
 - Locate the APEX folder
 - Enter: make all
