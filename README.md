@@ -19,6 +19,7 @@ After a while, the cache simulator computes the reward and sends it back to the 
 - Two terminal windows is required to run this simulator: one is for the Q-learning server, one for the cache simulator. Note that the Q-learning server must be run before the cache simulator.
 
 To start the server, enter: python3 server/main.py trace_name weight_file 8 16
+
 To start the cache simulator, enter: ./exclusiu path_to_the_trace_file
 
 Please refer to exclusiu's GitHub page for more information: https://github.tamu.edu/djimenez/exclusiu
